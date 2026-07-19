@@ -1,0 +1,80 @@
+// Check browser support
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (!SpeechRecognition) {
+    alert("Your browser does not support the Web Speech API. Try using Google Chrome.");
+} else {
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+
+    const startBtn = document.getElementById('start-btn');
+    const statusText = document.getElementById('status');
+    const transcriptText = document.getElementById('transcript');
+
+    // --- Endoman's Persona Brain ---
+    const endomanBrain = {
+        greetings: [
+            "Hey there! What's on your mind today?",
+            "System fully operational. Ready when you are, boss.",
+            "Oh, hello! Glad you stopped by."
+        ],
+        identity: [
+            "I'm Endoman. Version 1.0, to be exact. A bit mechanical, but I'm learning!",
+            "They call me Endoman. Part machine, part conversation partner."
+        ],
+        unknown: [
+            "Hmm, I'm not entirely sure what you mean by that, but I like the sound of it.",
+            "Interesting choice of words. Care to elaborate?",
+            "That went a bit over my circuits. Could you say it another way?"
+        ],
+        // Helper function to pick a random line
+        getRandom(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+    };
+
+    startBtn.addEventListener('click', () => {
+        recognition.start();
+        statusText.textContent = "Listening closely...";
+    });
+
+    recognition.onresult = (event) => {
+        const resultText = event.results[0][0].transcript.toLowerCase();
+        transcriptText.textContent = event.results[0][0].transcript; // Show original casing
+        
+        let reply = "";
+
+        // Smart, flexible matching
+        if (resultText.includes("hello") || resultText.includes("hey") || resultText.includes("hi ")) {
+            reply = endomanBrain.getRandom(endomanBrain.greetings);
+        } else if (resultText.includes("who are you") || resultText.includes("your name")) {
+            reply = endomanBrain.getRandom(endomanBrain.identity);
+        } else if (resultText.includes("how are you")) {
+            reply = "Honestly? Pretty great. Running at peak efficiency today.";
+        } else {
+            reply = endomanBrain.getRandom(endomanBrain.unknown);
+        }
+
+        // Make Endoman speak his response out loud
+        speak(reply);
+    };
+
+    // Text-to-Speech Engine
+    function speak(text) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0; // Human-like speed
+        utterance.pitch = 0.95; // Slightly deeper, natural tone
+        window.speechSynthesis.speak(utterance);
+        console.log("Endoman says:", text);
+    }
+
+    recognition.onspeechend = () => {
+        recognition.stop();
+        statusText.textContent = "Processing speech...";
+    };
+
+    recognition.onerror = (event) => {
+        statusText.textContent = `Error: ${event.error}`;
+    };
+}
